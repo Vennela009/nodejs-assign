@@ -8,6 +8,10 @@ Design 5 API calls with endpoints namely:
 Create Form and Take customer details and update into tables using API’s and redirect to
 all users information Page
 all users information Page: Show all users information in the table.
+
+
+
+
 API Documentation:
 1) /details API will fetch details of a specific user given the user_id as a query
 parameter.
