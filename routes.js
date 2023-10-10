@@ -1,95 +1,34 @@
-// routes.js
+// Example controller structure
 const express = require('express');
-const passport = require('passport');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const { User } = require('./models');
-
 const router = express.Router();
-const SECRET_KEY = 'your_secret_key_here'; // Replace with the same secret key used in app.js
 
-// Middleware to authenticate requests
-const authenticate = (req, res, next) => {
-  passport.authenticate('local', { session: false }, (err, user) => {
-    if (err || !user) {
-      return res.status(401).json({ message: 'Authentication failed.' });
-    }
-
-    req.user = user;
-    return next();
-  })(req, res, next);
+const detailsController = (req, res) => {
+  const { user_id } = req.params;
+  User.findByPk(user_id)
+    .then(user => {
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      return res.status(200).json({ user_details: user });
+    })
+    .catch(err => {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    });
 };
 
-// Endpoint 1: Fetch user details
-router.get('/details/:user_id', (req, res) => {
-  const { user_id } = req.params;
+router.get('/details/:user_id', authenticate, detailsController);
 
-  User.findByPk(user_id)
-    .then((user) => {
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      res.json({ user_details: user });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Internal server error' });
-    });
-});
+// PUT /update
+router.put('/update', authenticate, updateController);
 
-// Endpoint 2: Update user details
-router.put('/update', authenticate, (req, res) => {
-  const { user_id } = req.user;
-  const newDetails = req.body;
+// GET /image
+router.get('/image/:user_id', imageController);
 
-  User.update(newDetails, { where: { user_id } })
-    .then(() => {
-      res.json({ message: 'User details updated successfully' });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Internal server error' });
-    });
-});
+// POST /insert
+router.post('/insert', authenticate, insertController);
 
-// Endpoint 3: Get user image
-router.get('/image/:user_id', (req, res) => {
-  const { user_id } = req.params;
-
-  User.findByPk(user_id, { attributes: ['user_image'] })
-    .then((user) => {
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      res.json({ user_image: user.user_image });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Internal server error' });
-    });
-});
-
-// Endpoint 4: Insert a new user
-router.post('/insert', authenticate, (req, res) => {
-  const newUser = req.body;
-
-  User.create(newUser)
-    .then(() => {
-      res.json({ message: 'User created successfully' });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Internal server error' });
-    });
-});
-
-// Endpoint 5: Delete a user
-router.delete('/delete/:user_id', authenticate, (req, res) => {
-  const { user_id } = req.params;
-
-  User.destroy({ where: { user_id } })
-    .then(() => {
-      res.json({ message: 'User deleted successfully' });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Internal server error' });
-    });
-});
+// DELETE /delete
+router.delete('/delete/:user_id', authenticate, deleteController);
 
 module.exports = router;
