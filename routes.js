@@ -1,6 +1,25 @@
 // Example controller structure
 const express = require('express');
 const router = express.Router();
+const passportJWT = require('passport-jwt');
+const JWTStrategy = passportJWT.Strategy;
+const ExtractJWT = passportJWT.ExtractJwt;
+
+// Define Passport JWT strategy
+passport.use(new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey: 'your_secret_key',
+}, (jwtPayload, done) => {
+  // Check if the user exists in the database
+  User.findByPk(jwtPayload.user_id)
+    .then(user => {
+      if (!user) {
+        return done(null, false);
+      }
+      return done(null, user);
+    })
+    .catch(err => done(err, false));
+}));
 
 const detailsController = (req, res) => {
   const { user_id } = req.params;
@@ -16,6 +35,7 @@ const detailsController = (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     });
 };
+
 
 router.get('/details/:user_id', authenticate, detailsController);
 
